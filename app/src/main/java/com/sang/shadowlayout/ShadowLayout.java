@@ -1,7 +1,6 @@
 package com.sang.shadowlayout;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -12,8 +11,8 @@ import android.graphics.RectF;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.MediaController;
 
 /**
  * 作者： ${桑小年} on 2017/11/18.
@@ -22,15 +21,22 @@ import android.widget.MediaController;
 
 public class ShadowLayout extends FrameLayout {
 
-    private Paint mPaint;
-    private Path mPath;
-    private float topLeftRadius;
-    private float topRightRadius;
-    private float bottomLeftRadius;
-    private int bottomRightRadius;
-    private Paint imagePaint;
-    private RectF rectF;
+    private Paint shadowPaint;
+    private float radius;
+
+    private RectF   shadowRectF;
     private Context mContext;
+
+    public static final int ALL = 0;
+    public static final int LEFT = 1;
+    public static final int TOP = 2;
+    public static final int RIGHT = 3;
+    public static final int BOTTOM = 4;
+    private int shadowRadio, shadowX, shadowY;
+    private int shadowColor;
+    private int shadowSide;
+    private int shadowLeft, shadowTop, shadowRight, shadowBotoom;
+
 
     public ShadowLayout(@NonNull Context context) {
         this(context, null, 0);
@@ -49,46 +55,67 @@ public class ShadowLayout extends FrameLayout {
 
 
     private void initView(Context context, AttributeSet attrs) {
+        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        setWillNotDraw(false);
         mContext = context;
-        mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mPaint.setStyle(Paint.Style.FILL);
-        mPaint.setColor(Color.BLUE);
-        mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
 
+        radius = dip2px(10);
 
-        imagePaint = new Paint();
-        imagePaint.setXfermode(null);
+        shadowRectF = new RectF();
 
-        mPath = new Path();
+        shadowRadio = 20;
+        shadowX = 0;
+        shadowY = 0;
+        shadowColor = Color.parseColor("#88000000");
 
-        topLeftRadius = dip2px(20);
-        topRightRadius = dip2px(60);
-        bottomLeftRadius = dip2px(60);
-        bottomRightRadius = dip2px(60);
-
-        rectF = new RectF();
+        shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        shadowPaint.setColor(Color.TRANSPARENT);
+        shadowPaint.setShadowLayer(shadowRadio, shadowX, shadowY, shadowColor);
+        shadowLeft = dip2px(5);
+        shadowTop = dip2px(5);
+        shadowRight = dip2px(5);
+        shadowBotoom = dip2px(5);
 
     }
 
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        rectF.left = 0;
-        rectF.top = 0;
-        rectF.right = w;
-        rectF.bottom = h;
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+//        int offset = shadowRadio + dip2px(5);
+        int offset = shadowRadio;
+        float rectLeft = 0;
+        float rectTop = 0;
+        float rectRight = this.getWidth();
+        float rectBottom = this.getHeight();
+        int paddingLeft = offset;
+        int paddingTop = offset;
+        int paddingRight = offset;
+        int paddingBottom = offset;
+
+//        if (shadowY != 0.0f) {
+//            rectBottom = rectBottom - shadowY;
+//            paddingBottom = paddingBottom + (int) shadowY;
+//        }
+//        if (shadowX != 0.0f) {
+//            rectRight = rectRight - shadowX;
+//            paddingRight = paddingRight + (int) shadowX;
+//        }
+        shadowRectF.left = rectLeft + shadowRadio;
+        shadowRectF.top = rectTop + shadowRadio;
+        shadowRectF.right = rectRight - shadowRadio;
+        shadowRectF.bottom = rectBottom - shadowRadio;
+
+        setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
     }
+
 
 
     @Override
-    protected void dispatchDraw(Canvas canvas) {
-        canvas.saveLayer(new RectF(0, 0, canvas.getWidth(), canvas.getHeight()), imagePaint, Canvas.ALL_SAVE_FLAG);
-        super.dispatchDraw(canvas);
-        mPath.addRoundRect(rectF,topLeftRadius,topLeftRadius, Path.Direction.CCW);
-        canvas.drawPath(mPath,mPaint);
-        canvas.restore();
-
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        canvas.drawRoundRect(shadowRectF, radius, radius, shadowPaint);
     }
+
 
 
 
